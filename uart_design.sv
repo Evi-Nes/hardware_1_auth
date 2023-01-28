@@ -191,3 +191,130 @@ end
 
 endmodule
 
+
+module uart_receiver(give_reset, give_clk, Rx_DATA, baud_select, RX_EN, RxD, Rx_FERROR, Rx_PERROR, Rx_VALID);
+input give_clk, give_reset;
+input [2:0] baud_select;
+input RX_EN;
+  
+output RxD;
+output [7:0] Rx_DATA;
+output Rx_FERROR; // Framing Error //
+output Rx_PERROR; // Parity Error //
+output Rx_VALID; // Rx_DATA is Valid //
+
+reg [3:0] counter;
+reg [3:0] bitIndex = 0;
+wire Rx_sample_ENABLE;
+reg mes_end = 0 ;
+  
+baud_controller baud_controller_rx_instance(give_reset, give_clk, baud_select, Rx_sample_ENABLE);
+
+reg [2:0] current_state, next_state;
+  reg [2:0] IDLE = 3'b000, TSTART = 3'b001, TDATA=3'b010 , TVALIDE=3'b011, TSTOP=3'b100;
+  
+  always @(posedge Rx_sample_ENABLE or posedge give_reset)
+begin
+    if (give_reset)
+    begin 
+        current_state <= IDLE;
+    end
+    else
+    begin
+        current_state <= next_state;
+    end
+end
+  
+  always@(posedge mes_end)
+    begin
+      mes_end = 0;
+      next_state = TVALIDATE;
+    end
+  
+  always@(current_state or RX_EN or counter)
+begin 
+    case(current_state)
+        IDLE:
+          if(RX_EN==1)
+            begin
+                next_state = TSTART;
+            end
+            else
+              begin
+                next_state = IDLE;
+              end
+      
+      	TSTART:
+           if(counter == 15)
+            begin
+                next_state = TDATA;
+            end
+          
+        TDATA:
+          if(counter == 15 && bitIndex < 7) 
+            begin
+                next_state = TDATA;
+            end
+      	else if(counter == 15 && mes_end == 1)
+       		begin
+                next_state = TVALIDATE;
+        	end
+          
+      TVALIDATE:
+          if(counter == 15)
+            begin
+                next_state = TSTOP;
+            end
+      
+         TSTOP:
+          if(counter == 15)
+            begin
+                next_state = IDLE;
+            end
+            
+    endcase
+end
+  
+  
+always@(current_state or counter) // Output Logic
+begin
+    case(current_state)
+        IDLE:
+        begin
+            Rx_FERROR = 0;
+            Rx_PERROR = 0;
+          	Rx_VALID = 0;
+        end
+      
+  		 TSTART:
+          begin
+              RxD = 0;
+              bitIndex = 0;
+          end
+      
+    	 TDATA:
+          if(counter == 0)
+            begin
+                RxD = Rx_DATA[bitIndex];
+              if (bitIndex == 7)
+                begin
+                bitIndex = 0;
+                mes_end = 1;
+                end
+              else
+                begin
+                bitIndex = bitIndex + 1;
+            	end
+           end
+      
+      	TVALIDATE:
+          begin
+              
+            end
+      
+      	TSTOP:
+            begin
+              
+            end
+      
+endmodule
