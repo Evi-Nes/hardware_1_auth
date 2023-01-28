@@ -1,6 +1,4 @@
-// Code your design here
-`timescale 10ns/10ns
-
+`timescale 1ns/1ns
 
 module baud_controller(reset, clk, baud_select, sample_ENABLE); 
 
@@ -98,26 +96,34 @@ begin
                 next_state = TSTART;
             end
             else
+              begin
                 next_state = IDLE;
+              end
 
-        TSTART:
-          if(counter == 1 && bitIndex < 7) 
+      	TSTART:
+          if(counter == 15)
             begin
                 next_state = TDATA;
             end
-      	else if(counter == 1 && mes_end == 1)
+
+        TDATA:
+          if(counter == 15 && bitIndex < 7) 
+            begin
+                next_state = TDATA;
+            end
+      else if(counter == 15 && mes_end == 1)
        		begin
                 next_state = TPARITY;
         	end
 
         TPARITY:
-          if(counter == 1)
+          if(counter == 15)
             begin
                 next_state = TSTOP;
             end
 
         TSTOP:
-          if(counter == 1)
+          if(counter == 15)
             begin
                 next_state = IDLE;
             end
@@ -134,7 +140,7 @@ begin
         end
 
         TSTART:
-          if (counter == 1)
+//           if (counter == 1)
           begin
               TX_BUSY = 1;
               TxD = 0;
@@ -142,7 +148,7 @@ begin
           end
 
         TDATA:
-          if(counter == 1)
+          if(counter == 0)
             begin
                 TxD = Tx_DATA[bitIndex];
               if (bitIndex == 7)
@@ -157,13 +163,13 @@ begin
            end
 
         TPARITY:
-          if(counter == 1)
+//           if(counter == 1)
             begin
                 TxD = ^Tx_DATA;
             end
 
         TSTOP:
-          if(counter == 1)
+//           if(counter == 1)
             begin
               TxD = 1;
               TX_BUSY = 0;
@@ -184,3 +190,4 @@ begin
 end
 
 endmodule
+
