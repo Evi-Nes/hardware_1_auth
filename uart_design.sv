@@ -81,11 +81,6 @@ begin
     end
 end
   
-  always@(posedge mes_end)
-    begin
-      next_state = TPARITY;
-    end
-  
   always@(current_state or TX_EN or Tx_WR or counter)
 begin 
     case(current_state)
@@ -110,7 +105,7 @@ begin
             begin
                 next_state = TDATA;
             end
-      else if(counter == 15 && mes_end == 1)
+      else if(counter == 15)
        		begin
                 next_state = TPARITY;
         	end
@@ -154,12 +149,7 @@ begin
               if (bitIndex == 8)
                 begin
                 bitIndex = 0;
-                mes_end = 1;
                 end
-              else
-                begin
-//                 bitIndex = bitIndex + 1;
-            	end
            end
             if(counter == 15)
         	begin
@@ -170,7 +160,6 @@ begin
         TPARITY:
           //if(counter == 1)
             begin
-              mes_end = 0;
                 TxD = ^Tx_DATA;
             end
 
@@ -232,11 +221,7 @@ begin
     end
 end
   
-  always@(posedge mes_end)
-    begin
-      mes_end = 0;
-      next_state = TVALIDATE;
-    end
+  
   
   always@(current_state or RX_EN or counter)
 begin 
@@ -262,7 +247,7 @@ begin
             begin
                 next_state = TDATA;
             end
-      	else if(counter == 15 && mes_end == 1)
+      	else if(counter == 15)
        		begin
                 next_state = TVALIDATE;
         	end
@@ -299,18 +284,25 @@ begin
           end
       
     	 TDATA:
+           begin
            if(counter == 7)
             begin
               Rx_DATA[bitIndex] <= RxD;
-              if (bitIndex == 0)
+              if (bitIndex == -1)
                 begin
                 bitIndex = 7;
                 mes_end = 1;
                 end
               else
                 begin
-                bitIndex = bitIndex - 1;
+                // bitIndex = bitIndex - 1;
             	end
+              end
+             if(counter == 15)
+        	begin
+          		bitIndex = bitIndex - 1;
+        	end
+           
            end
       
       	TVALIDATE:
@@ -324,7 +316,7 @@ begin
       
       	TSTOP:
             begin
-              if(Rx_DATA != 1)
+              if( counter == 1 && RxD != 1)
                 begin
                   Rx_FERROR = 1;
                 end
