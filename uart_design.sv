@@ -48,6 +48,18 @@ end
 
 endmodule
 
+
+module bit_reverse (Rx_DATA, Rx_REVERSEDDATA);
+  input reg[7:0] Rx_DATA;
+  output reg[7:0] Rx_REVERSEDDATA;
+  
+  always @* begin
+    for (int i=0; i<8; i++) 
+      Rx_REVERSEDDATA[i] = Rx_DATA[7-i];
+  end
+endmodule
+
+
 module uart_transmitter(give_reset, give_clk, Tx_DATA, baud_select, Tx_WR, TX_EN, TxD, TX_BUSY);
 input give_clk, give_reset;
 input [2:0] baud_select;
@@ -134,7 +146,6 @@ begin
         end
 
         TSTART:
-//           if (counter == 1)
           begin
               TX_BUSY = 1;
               TxD = 0;
@@ -158,13 +169,11 @@ begin
           end
 
         TPARITY:
-          //if(counter == 1)
             begin
                 TxD = ^Tx_DATA;
             end
 
         TSTOP:
-           //if(counter == 1)
             begin
               TxD = 1;
               TX_BUSY = 0;
@@ -187,23 +196,25 @@ end
 endmodule
 
 
-module uart_receiver(give_reset, give_clk, Rx_DATA, baud_select, RX_EN, RxD, Rx_FERROR, Rx_PERROR, Rx_VALID);
+module uart_receiver(give_reset, give_clk, Rx_REVERSEDDATA, baud_select, RX_EN, RxD, Rx_FERROR, Rx_PERROR, Rx_VALID);
 input give_clk, give_reset;
 input [2:0] baud_select;
 input RX_EN;
   
 input reg RxD;
-output reg[7:0] Rx_DATA;
+output reg[7:0] Rx_REVERSEDDATA;
 output reg Rx_FERROR; // Framing Error //
 output reg Rx_PERROR; // Parity Error //
 output reg Rx_VALID; // Rx_DATA is Valid //
 
+reg[7:0] Rx_DATA;
 reg [3:0] counter;
 reg [3:0] bitIndex = 7;
 wire Rx_sample_ENABLE;
 reg mes_end = 0 ;
 reg expected_parity = 0;
   
+bit_reverse reverse(Rx_DATA, Rx_REVERSEDDATA);
 baud_controller baud_controller_rx_instance(give_reset, give_clk, baud_select, Rx_sample_ENABLE);
 
 reg [2:0] current_state, next_state;
@@ -220,7 +231,6 @@ begin
         current_state <= next_state;
     end
 end
-  
   
   
   always@(current_state or RX_EN or counter)
@@ -291,12 +301,7 @@ begin
               if (bitIndex == -1)
                 begin
                 bitIndex = 7;
-                mes_end = 1;
                 end
-              else
-                begin
-                // bitIndex = bitIndex - 1;
-            	end
               end
              if(counter == 15)
         	begin
