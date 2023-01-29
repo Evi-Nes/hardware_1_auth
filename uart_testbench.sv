@@ -1,4 +1,6 @@
-`timescale 1ns/1ns
+// Code your testbench here
+// or browse Examples
+`timescale 10ns/10ns
 
 module tb;
 
@@ -11,13 +13,14 @@ reg TX_EN = 1;
 wire TxD;
 wire TX_BUSY;
 
+reg serial_wire;
 reg [7:0] Rx_DATA;
 reg RX_EN = 1;
 reg Rx_FERROR, Rx_PERROR, Rx_VALID;
 
 // uart test(give_reset, give_clk, Tx_DATA, baud_select, Tx_WR, TX_EN, TxD, TX_BUSY, Rx_DATA, RX_EN, TxD, Rx_FERROR, Rx_PERROR, Rx_VALID);
-uart_transmitter transmitter(give_reset, give_clk, Tx_DATA, baud_select, Tx_WR, TX_EN, TxD, TX_BUSY);
-uart_receiver receiver(give_reset, give_clk, Rx_DATA, baud_select, RX_EN, RxD, Rx_FERROR, Rx_PERROR, Rx_VALID);
+uart_transmitter transmitter(give_reset, give_clk, Tx_DATA, baud_select, Tx_WR, TX_EN, serial_wire, TX_BUSY);
+uart_receiver receiver(give_reset, give_clk, Rx_DATA, baud_select, RX_EN, serial_wire, Rx_FERROR, Rx_PERROR, Rx_VALID);
   
 initial begin
   	$dumpfile("dump.vcd");
