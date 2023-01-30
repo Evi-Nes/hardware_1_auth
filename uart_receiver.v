@@ -21,7 +21,7 @@ bit_reverse reverse(Rx_RawDATA, Rx_DATA);
 baud_controller baud_controller_rx_instance(reset, clock, baud_select, Rx_sample_ENABLE);
 
 reg [2:0] current_state, next_state;
-reg [2:0] IDLE = 3'b000, START = 3'b001, DATA = 3'b010, PARITY = 3'b011, STOP = 3'b100; // Define receiver's states
+  reg [2:0] IDLE = 3'b000, START = 3'b001, DATA = 3'b010, VALIDATE = 3'b011, STOP = 3'b100; // Define receiver's states
 
 always @(posedge Rx_sample_ENABLE or posedge reset)
 begin
@@ -41,36 +41,36 @@ begin
         IDLE:
             if(RX_EN==1 && RxD == 0)
             begin
-                next_state = TSTART;
+                next_state = START;
             end
             else
             begin
                 next_state = IDLE;
             end
       
-      	TSTART:
+      	START:
             if(counter == 15)
             begin
-                next_state = TDATA;
+                next_state = DATA;
             end
           
-        TDATA:
+        DATA:
             if(counter == 15 && bitIndex > 0) 
             begin
-                next_state = TDATA;
+                next_state = DATA;
             end
       	    else if(counter == 15)
        		begin
-                next_state = TVALIDATE;
+                next_state = VALIDATE;
         	end
           
-        TVALIDATE:
+        VALIDATE:
             if(counter == 15)
             begin
-                next_state = TSTOP;
+                next_state = STOP;
             end
       
-        TSTOP:
+        STOP:
             if(counter == 15)
             begin
                 next_state = IDLE;
@@ -89,12 +89,12 @@ begin
           	Rx_VALID = 0;
         end
       
-  		TSTART:
+  		START:
         begin
             bitIndex = 7;
         end
       
-    	TDATA:
+    	DATA:
         begin
             if(counter == 7)
             begin
@@ -110,7 +110,7 @@ begin
         	end
         end
       
-      	TVALIDATE:
+      	VALIDATE:
         begin
             expected_parity = ^Rx_RawDATA;
             if(expected_parity != RxD)
@@ -119,7 +119,7 @@ begin
               end
         end
       
-      	TSTOP:
+      	STOP:
         begin
             if( counter == 1 && RxD != 1)
             begin
