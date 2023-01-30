@@ -1,4 +1,8 @@
 `timescale 10ns/10ns
+`include "uart_receiver.v"
+`include "uart_transmitter.v"
+`include "uart_baud_controller.v"
+`include "uart_bit_reverse.v"
 
 module tb;
 
