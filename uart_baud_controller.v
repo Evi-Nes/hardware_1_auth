@@ -13,7 +13,7 @@ reg[13:0] counter;
 always@(baud_select)
 begin
     case(baud_select)
-        3'b000:max_value = 10417; // 10^9 / (300 * 16 * 20) We sample 300 bits per second (10^9 nanoseconds, with 16 samples per bit, 
+        3'b000:max_value = 10417; // 10^9 / (300 * 16 * 20) We sample 300 bits per second (10^9 nanoseconds, with 16 samples per bit, and a clock period of 20 nanoseconds) 
         3'b001:max_value = 2604;
         3'b010:max_value = 651;
         3'b011:max_value = 326;
