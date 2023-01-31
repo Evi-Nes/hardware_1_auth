@@ -31,17 +31,25 @@ initial begin
     #20;
     reset = 0;
 
-    case(baud_select) 
-        3'b000: #(10417*20);
-        3'b001: #(2604*20);
-        3'b010: #(651*20);
-        3'b011: #(326*20);
-        3'b100: #(163*20);
-        3'b101: #(81*20);
-        3'b110: #(54*20);
-        3'b111: #(27*20);
-    endcase
+    #20;
+    Tx_WR = 0;
 
+    case (baud_select) // Delay for message transfer
+        3'b000: #(10417*20*16*11); // 10417 is the number of cycles for 1 second,
+        // 20 is the clock period, 16 is the number of bits per byte, 11 is the number of bytes in the message
+        3'b001: #(2604*20*16*11);
+        3'b010: #(651*20*16*11);
+        3'b011: #(326*20*16*11);
+        3'b100: #(163*20*16*11);
+        3'b101: #(81*20*16*11);
+        3'b110: #(54*20*16*11);
+        3'b111: #(27*20*16*11);
+    endcase
+    
+    Tx_DATA = 8'b00011010;
+    Tx_WR = 1;
+
+    #20;
     Tx_WR = 0;
 
     case (baud_select) // Delay for message transfer
